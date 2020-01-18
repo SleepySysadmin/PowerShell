@@ -200,6 +200,15 @@ function Get-InterestingInboxRules
     
     #>
 
+    Function IR-Logwrite
+    {
+        Param ([string]$logstring)
+        $IRLogfile = "$env:USERPROFILE\Desktop\$today - Office 365 Investigation\Exchange Online Output\InterestingInboxRules.txt"
+        
+        Add-content $IRLogfile -value $logstring
+        
+    }
+
     $Mailboxes = Get-Mailbox -Filter * -ResultSize Unlimited
 
     $i = 0
@@ -214,25 +223,54 @@ function Get-InterestingInboxRules
         $InboxRules = Get-InboxRule -Mailbox $Mailbox.UserPrincipalName
         foreach ($InboxRule in $InboxRules)
         {
+            $ID = $InboxRule.Identity
+            # Going to be doing more text output to grab all data
 
             If ($InboxRule.DeleteMessage -eq $true)
             {
 
-                Write-Output $InboxRule
+                Write-Output $ID
+                IR-Logwrite " "
+                IR-Logwrite "---------------------------------------------------------------------------"
+                IR-Logwrite "The Inbox Rule from $ID deletes a message when processed:"
+                IR-Logwrite "---------------------------------------------------------------------------"
+                IR-Logwrite " "
+
+                $String = $InboxRule | Format-List | Out-String
+
+                IR-Logwrite $String
 
             }
 
             elseIf ($InboxRule.ForwardTo -ne $null)
             {
 
-                Write-Output $InboxRule
+                Write-Output $ID
+                IR-Logwrite " "
+                IR-Logwrite "---------------------------------------------------------------------------"
+                IR-Logwrite "The Inbox Rule from $ID forwards a message when processed:"
+                IR-Logwrite "---------------------------------------------------------------------------"
+                IR-Logwrite " "
+
+                $String = $InboxRule | Format-List | Out-String
+
+                IR-Logwrite $String
 
             }
 
             elseIf ($InboxRule.ForwardAsAttachment -ne $null)
             {
 
-                Write-Output $InboxRule
+                Write-Output $ID
+                IR-Logwrite " "
+                IR-Logwrite "---------------------------------------------------------------------------"
+                IR-Logwrite "The Inbox Rule from $ID fordwards a message as an attachment when processed:"
+                IR-Logwrite "---------------------------------------------------------------------------"
+                IR-Logwrite " "
+
+                $String = $InboxRule | Format-List | Out-String
+
+                IR-Logwrite $String
 
             }
 
@@ -344,8 +382,8 @@ Write-Warning "Searching back $DaysToSearchBack days from today, $today..."
 Start-Sleep -Seconds 5
 
 New-OutputDirectory
-Get-ExchangeOnlineData
+#Get-ExchangeOnlineData
 # Commenting this function out because it will take a very long time to run and will time out after a while. Uncomment the function if you wish to run it. Also advise running it on its own
-# Get-InterestingInboxRules
-Get-MSOnlineData
+Get-InterestingInboxRules
+#Get-MSOnlineData
 
