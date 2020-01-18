@@ -264,7 +264,7 @@ function Get-InterestingInboxRules
                 Write-Output $ID
                 IR-Logwrite " "
                 IR-Logwrite "---------------------------------------------------------------------------"
-                IR-Logwrite "The Inbox Rule from $ID fordwards a message as an attachment when processed:"
+                IR-Logwrite "The Inbox Rule from $ID forwards a message as an attachment when processed:"
                 IR-Logwrite "---------------------------------------------------------------------------"
                 IR-Logwrite " "
 
