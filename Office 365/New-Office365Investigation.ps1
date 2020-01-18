@@ -384,8 +384,8 @@ Write-Warning "Searching back $DaysToSearchBack days from today, $today..."
 Start-Sleep -Seconds 5
 
 New-OutputDirectory
-#Get-ExchangeOnlineData
+Get-ExchangeOnlineData
 # Commenting this function out because it will take a very long time to run and will time out after a while. Uncomment the function if you wish to run it. Also advise running it on its own
-Get-InterestingInboxRules
-#Get-MSOnlineData
+# Get-InterestingInboxRules
+Get-MSOnlineData
 
