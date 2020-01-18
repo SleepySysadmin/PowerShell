@@ -375,6 +375,7 @@ Try
 catch 
 {
    write-error "You must call the Connect-MsolService cmdlet before calling any other cmdlets" 
+    throw   
 
 }
 
