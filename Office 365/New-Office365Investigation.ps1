@@ -1,6 +1,8 @@
 <#
     .SYNOPSIS
-        Script to gather and audit information pretaining to a forensic investigation. 
+        Script to gather and audit information pretaining to a forensic investigation. A new directory 
+        will be made on the users Desktop folder with todays date. Any relevent information will be
+        sent there. 
 
     .DESCRIPTION
         To assist in Office 365 investigation, this script assists investigators and engineers in finding malicious alterations to an Office 365 environment.
