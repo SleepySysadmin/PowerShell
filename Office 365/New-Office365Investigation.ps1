@@ -27,6 +27,35 @@ $today = Get-Date -Format MM-dd-yyyy
 [int]$DaysToSearchBack = '90' # Edit this to suit your needs
 $SearchDate = (Get-Date).AddDays(-$DaysToSearchBack)
 
+Function Show-Menu
+{
+
+    Write-Output "---------------------------------------------"
+    Write-Output "                                             "
+    Write-Output "______       _____       _____       _____   "
+    Write-Output "| ___ \     |  ___|     /  __ \     /  ___|  "
+    Write-Output "| |_/ /     | |__       | /  \/     \ `--.   "
+    Write-Output "| ___ \     |  __|      | |          `--. \  "
+    Write-Output "| |_/ /  _  | |___   _  | \__/\  _  /\__/ /  "
+    Write-Output "\____/  (_) \____/  (_)  \____/ (_) \____/   "
+    Write-Output "                                             "
+    Write-Output "  An Office 365 Information Gathering Tool   "
+    Write-Output "                                             "
+    Write-Output "---------------------------------------------"
+    
+    $All = New-Object System.Management.Automation.Host.ChoiceDescription '&Red', 'Favorite color: Red'
+    $ExchangeOnlineData = New-Object System.Management.Automation.Host.ChoiceDescription '&Blue', 'Favorite color: Blue'
+    $MSOnlineData = New-Object System.Management.Automation.Host.ChoiceDescription '&Yellow', 'Favorite color: Yellow'
+    $InterestingInboxRules = New-Object System.Management.Automation.Host.ChoiceDescription '&Yellow', 'Favorite color: Yellow'
+    
+    $options = [System.Management.Automation.Host.ChoiceDescription[]]($All, $ExchangeOnlineData, $MSOnlineData, $InterestingInboxRules)
+    $title = 'Please Select:'
+    $message = 'What Office 365 Information would you like to gather?'
+    $result = $host.ui.PromptForChoice($title, $message, $options, 0)
+
+
+}
+
 function New-OutputDirectory
 {
     # Root
@@ -367,22 +396,17 @@ function Get-MSOnlineData
 }
 
 # Start
-Try
-{
-    Get-MsolDomain -ErrorAction Stop > $null
-    
-}
-catch 
-{
-   write-error "You must call the Connect-MsolService cmdlet before calling any other cmdlets" 
-   throw   
-
-}
+#Show-Menu
 
 # Warm and fuzzies
-Write-Output "Beginning"
-Write-Warning "Searching back $DaysToSearchBack days from today, $today..."
-Start-Sleep -Seconds 5
+For ($i=5; $i -gt 1; $i–-)
+{  
+
+    Write-Progress -Activity "Searching back $DaysToSearchBack days from today, $today. Starting soon..." -SecondsRemaining $i
+    Start-Sleep 1
+
+}
+Write-Output "Beginning..."
 
 New-OutputDirectory
 Get-ExchangeOnlineData
