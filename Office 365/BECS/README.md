@@ -24,6 +24,7 @@ This tool was created with an incident response tech in mind. If you find yourse
 to gather any recent changes to an Office 365 tenant, this tool is for you. 
 
 
+
 The following data is collected from this tool:
 * Basic information about the Office 365 tenant
 * Mailbox forward addresses
@@ -33,6 +34,8 @@ The following data is collected from this tool:
 * Newly created mailboxes
 * Recently added mobile devices
 * List all MS Online role members
+
+Anything that was altered/changed in the above data (if applicable) in the last 90 days is pulled and recorded. 
 
 This tool makes no alterations to the Office 365 tenant, nor does it make any
 new objects. It collects data and outputs results in a new directory on the users desktop. 
