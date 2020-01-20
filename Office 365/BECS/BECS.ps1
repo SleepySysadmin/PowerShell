@@ -286,6 +286,33 @@ function Get-InterestingInboxRules
     
     #>
 
+    $Offset = 0
+    $PageSize = 150
+
+    Write-Output "Beginning to gather interesting inbox rules..."
+
+    function New-Office365Connection
+{
+	Try
+	{
+		# Close any old remote session
+		Get-PSSession | Remove-PSSession -Confirm:$false
+		
+		# Start a new Exchange Online session
+        Connect-EXOPSSession
+
+	}
+	
+	Catch
+	{
+
+		$Errorcode = $Error[0] | Select-Object -Property *
+		Write-Error "[Error] - Modules and variables failed to load for Send-SkuReport! See Error below:"
+		Write-Error $Error[0]
+		
+	}
+}
+
     Function IR-Logwrite
     {
         Param ([string]$logstring)
@@ -295,81 +322,96 @@ function Get-InterestingInboxRules
         
     }
 
-    $Mailboxes = Get-Mailbox -Filter * -ResultSize Unlimited
-
-    $i = 0
-    $Total = $Mailboxes.count
+    $Mailboxes = Get-Mailbox -Filter * -ResultSize Unlimited | Export-Csv "$env:USERPROFILE\Desktop\$today - Office 365 Investigation\Exchange Online Output\AllMailboxes.csv" -Append -Force
     
-    Foreach ($Mailbox in $Mailboxes)
+    Do
     {
-
-        Write-Progress -Activity "Checking Mailbox Inbox Rules..." -CurrentOperation $Mailbox -PercentComplete ($i/$Total * 100)
-		$i++
-
-        $InboxRules = Get-InboxRule -Mailbox $Mailbox.UserPrincipalName
-        foreach ($InboxRule in $InboxRules)
+        
+        $MailboxCount = (Import-Csv "$env:USERPROFILE\Desktop\$today - Office 365 Investigation\Exchange Online Output\AllMailboxes.csv").count
+        $MailboxList = Import-Csv "$env:USERPROFILE\Desktop\$today - Office 365 Investigation\Exchange Online Output\AllMailboxes.csv" | Select-Object -Skip $Offset -First $PageSize
+        
+        Foreach ($Mailbox in $MailboxList)
         {
-            $ID = $InboxRule.Identity
-            # Going to be doing more text output to grab all data
 
-            If ($InboxRule.DeleteMessage -eq $true)
+            $UPN = $Mailbox.UserPrincipalName
+            Write-Output "Checking $UPN"
+
+            $InboxRules = Get-InboxRule -Mailbox $Mailbox.UserPrincipalName
+            foreach ($InboxRule in $InboxRules)
             {
+                $ID = $InboxRule.Identity
+                # Going to be doing more text output to grab all data
 
-                Write-Output $ID
-                IR-Logwrite " "
-                IR-Logwrite "---------------------------------------------------------------------------"
-                IR-Logwrite "The Inbox Rule from $ID deletes a message when processed:"
-                IR-Logwrite "---------------------------------------------------------------------------"
-                IR-Logwrite " "
+                If ($InboxRule.DeleteMessage -eq $true)
+                {
 
-                $String = $InboxRule | Format-List | Out-String
+                    Write-Warning "$ID was flagged"
+                    IR-Logwrite " "
+                    IR-Logwrite "---------------------------------------------------------------------------"
+                    IR-Logwrite "The Inbox Rule from $ID deletes a message when processed:"
+                    IR-Logwrite "---------------------------------------------------------------------------"
+                    IR-Logwrite " "
 
-                IR-Logwrite $String
+                    $String = $InboxRule.Description | Format-List | Out-String
 
-            }
+                    IR-Logwrite $String
 
-            elseIf ($InboxRule.ForwardTo -ne $null)
-            {
+                }
 
-                Write-Output $ID
-                IR-Logwrite " "
-                IR-Logwrite "---------------------------------------------------------------------------"
-                IR-Logwrite "The Inbox Rule from $ID forwards a message when processed:"
-                IR-Logwrite "---------------------------------------------------------------------------"
-                IR-Logwrite " "
+                elseIf ($InboxRule.ForwardTo -ne $null)
+                {
 
-                $String = $InboxRule | Format-List | Out-String
+                    Write-Warning "$ID was flagged"
+                    IR-Logwrite " "
+                    IR-Logwrite "---------------------------------------------------------------------------"
+                    IR-Logwrite "The Inbox Rule from $ID forwards a message when processed:"
+                    IR-Logwrite "---------------------------------------------------------------------------"
+                    IR-Logwrite " "
 
-                IR-Logwrite $String
+                    $String = $InboxRule.Description | Format-List | Out-String
 
-            }
+                    IR-Logwrite $String
 
-            elseIf ($InboxRule.ForwardAsAttachment -ne $null)
-            {
+                }
 
-                Write-Output $ID
-                IR-Logwrite " "
-                IR-Logwrite "---------------------------------------------------------------------------"
-                IR-Logwrite "The Inbox Rule from $ID forwards a message as an attachment when processed:"
-                IR-Logwrite "---------------------------------------------------------------------------"
-                IR-Logwrite " "
+                elseIf ($InboxRule.ForwardAsAttachment -ne $null)
+                {
 
-                $String = $InboxRule | Format-List | Out-String
+                    Write-Warning "$ID was flagged"
+                    IR-Logwrite " "
+                    IR-Logwrite "---------------------------------------------------------------------------"
+                    IR-Logwrite "The Inbox Rule from $ID forwards a message as an attachment when processed:"
+                    IR-Logwrite "---------------------------------------------------------------------------"
+                    IR-Logwrite " "
 
-                IR-Logwrite $String
+                    $String = $InboxRule.Description | Format-List | Out-String
 
-            }
+                    IR-Logwrite $String
 
-            else
-            {
-            
-                $null
+                }
+
+                else
+                {
                 
+                    $null
+                    
+                }
+
             }
 
         }
 
+        #Increase the start point for the next chunk
+        $Offset += $PageSize
+
+        New-Office365Connection
+
     }
+
+
+    While ($offset -lt $MailboxCount)
+
+    Get-PSSession | Remove-PSSession
 
 }
 
