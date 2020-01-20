@@ -6,14 +6,17 @@
 
     .DESCRIPTION
         To assist in Office 365 investigation, this script assists investigators and engineers in finding malicious alterations to an Office 365 environment.
-        The following information is gathered from all user mailboxes & MSOL accounts:
+        The following information is gathered from the Office 365 tenant:
+        - Basic information and configuration about the tenant
         - Mailbox forward addresses
         - Inbox Rules
         - Recent Exchange Online mail flow rules
         - Newly created MSOL Users
         - Newly created mailboxes
         - Recently added mobile devices
-        - List all Global Administrators
+        - List all MS Online role members
+
+        This controller script is intended to be ran by an end user. 
     
     .NOTES
         Developed in PowerShell version 5.1. Office 365 and Exchange Online modules are required and must be connected to both prior to running controller
@@ -24,16 +27,97 @@
 
 # Global Variables
 $today = Get-Date -Format MM-dd-yyyy
-[int]$DaysToSearchBack = '90' # Edit this to suit your needs
+[int]$DaysToSearchBack = '90' # This can be changed to suit your needs
 $SearchDate = (Get-Date).AddDays(-$DaysToSearchBack)
 
 function New-OutputDirectory
 {
-    # Root
-    New-Item -Path $env:USERPROFILE\Desktop\ -ItemType Directory -Name "$today - Office 365 Investigation" -Verbose
 
-    New-Item -Path "$env:USERPROFILE\Desktop\$today - Office 365 Investigation\" -ItemType Directory -Name "Exchange Online Output" -Verbose -OutVariable ExchangeOnlineOutput
-    New-Item -Path "$env:USERPROFILE\Desktop\$today - Office 365 Investigation\" -ItemType Directory -Name "MSOL User Output" -Verbose -OutVariable MSOLUserOutput
+    $DirCheck = Get-Item -Path "$env:USERPROFILE\Desktop\$today - Office 365 Investigation" -ErrorAction SilentlyContinue
+
+    If ($DirCheck)
+    {
+
+        Write-Warning "Root directory already exists. Data will be appended to previous runs files."
+
+    }
+
+    else
+    {
+    
+        New-Item -Path $env:USERPROFILE\Desktop\ -ItemType Directory -Name "$today - Office 365 Investigation"
+
+        New-Item -Path "$env:USERPROFILE\Desktop\$today - Office 365 Investigation\" -ItemType Directory -Name "Exchange Online Output"
+        New-Item -Path "$env:USERPROFILE\Desktop\$today - Office 365 Investigation\" -ItemType Directory -Name "MSOL User Output"
+    }
+
+
+}
+
+function Get-TenantInformation
+{
+    Function TI-Logwrite
+    {
+        Param ([string]$logstring)
+        $TILogfile = "$env:USERPROFILE\Desktop\$today - Office 365 Investigation\TenantInformation.txt"
+        
+        Add-content $TILogfile -value $logstring
+        
+    }
+    
+    Write-Output "Collecting basic information about the tenant..."
+    
+    # Company Info
+    $CompanyInformation = Get-MsolCompanyInformation
+
+    TI-Logwrite " "
+    TI-Logwrite "---------------------------------------------------------------------------"
+    TI-Logwrite "Company Information:"
+    TI-Logwrite "---------------------------------------------------------------------------"
+    TI-Logwrite " "
+    $String = $CompanyInformation | Out-String
+    TI-Logwrite $String
+
+    # Registerd Domains
+    $Domains = Get-MsolDomain
+
+    TI-Logwrite " "
+    TI-Logwrite "---------------------------------------------------------------------------"
+    TI-Logwrite "Registered Domain with MS Online:"
+    TI-Logwrite "---------------------------------------------------------------------------"
+    TI-Logwrite " "
+    $string = $Domains | Out-String
+    TI-Logwrite $String
+
+    # Subscription info
+    $SubInfo = Get-MsolSubscription | ft -AutoSize
+
+    TI-Logwrite " "
+    TI-Logwrite "---------------------------------------------------------------------------"
+    TI-Logwrite "Subscription Information:"
+    TI-Logwrite "---------------------------------------------------------------------------"
+    TI-Logwrite " "
+    $string = $SubInfo | Out-String
+    TI-Logwrite $String
+
+    # Exchange Online org config
+    $OrgConfig = Get-OrganizationConfig
+
+    TI-Logwrite " "
+    TI-Logwrite "---------------------------------------------------------------------------"
+    TI-Logwrite "Exchange Online Organization Configuration:"
+    TI-Logwrite "---------------------------------------------------------------------------"
+    TI-Logwrite " "
+    $string = $OrgConfig| Out-String
+    TI-Logwrite $String
+
+    If ($OrgConfig.AuditDisabled -eq $true)
+    {
+
+        Write-Warning "Auditing is NOT enabled at the organization level!"
+        Start-Sleep -Seconds 3
+
+    }
 
 }
 
@@ -295,7 +379,7 @@ function Get-MSOnlineData
         .SYNOPSIS
             Will gather the following data from this function:
                 - Recently created MSOL Users
-                - Members of all groups
+                - Members of all administrative roles
     
     #>
 
@@ -366,27 +450,94 @@ function Get-MSOnlineData
 
 }
 
-# Start
-Try
+Function Show-Menu
 {
-    Get-MsolDomain -ErrorAction Stop > $null
+
+    Write-Output "---------------------------------------------"
+    Write-Output "                                             "
+    Write-Output "______       _____       _____       _____   "
+    Write-Output "| ___ \     |  ___|     /  __ \     /  ___|  "
+    Write-Output "| |_/ /     | |__       | /  \/     \ `--.   "
+    Write-Output "| ___ \     |  __|      | |          `--. \  "
+    Write-Output "| |_/ /  _  | |___   _  | \__/\  _  /\__/ /  "
+    Write-Output "\____/  (_) \____/  (_)  \____/ (_) \____/   "
+    Write-Output "                                             "
+    Write-Output "     'Business Email Compromise Search'      "
+    Write-Output "  An Office 365 Information Gathering Tool   "
+    Write-Output "                                             "
+    Write-Output "---------------------------------------------"
     
-}
-catch 
-{
-   write-error "You must call the Connect-MsolService cmdlet before calling any other cmdlets" 
-   throw   
+    $All = New-Object System.Management.Automation.Host.ChoiceDescription '&All', 'Gather Everything'
+    $ExchangeOnlineData = New-Object System.Management.Automation.Host.ChoiceDescription '&ExchangeOnline', 'Exchange Online Data Only'
+    $MSOnlineData = New-Object System.Management.Automation.Host.ChoiceDescription '&MSOnline', 'MSOnline Data Only'
+    $InterestingInboxRules = New-Object System.Management.Automation.Host.ChoiceDescription '&InboxRules', 'Only Interesting Inbox Rules'
+    
+    $options = [System.Management.Automation.Host.ChoiceDescription[]]($All, $ExchangeOnlineData, $MSOnlineData, $InterestingInboxRules)
+    $title = 'Please Select Run Option:'
+    $message = 'What Office 365 Information would you like to gather?'
+    $result = $host.ui.PromptForChoice($title, $message, $options, 0)
+
+
+    # Ended up nesting the selection logic within the show-menu function. I cannot get the results variable to persist outside of this function.
+
+    # Warm and fuzzies
+    For ($i=5; $i -gt 1; $i--)
+    {  
+
+        Write-Progress -Activity "Searching back $DaysToSearchBack days from today, $today. Starting soon..." -SecondsRemaining $i
+        Start-Sleep 1
+
+    }
+    Write-Output "Beginning..."
+
+    If ($result -eq '0')
+    {
+        # Run Everything
+        New-OutputDirectory
+        Get-TenantInformation
+        Get-ExchangeOnlineData
+        Get-MSOnlineData
+        Get-InterestingInboxRules
+
+    }
+
+    elseif ($result -eq '1')
+    {
+        # Just Exchange Online Data
+        New-OutputDirectory
+        Get-TenantInformation
+        Get-ExchangeOnlineData
+        
+    }
+
+    elseif ($result -eq '2')
+    {
+        # Just MS Online Data
+        New-OutputDirectory
+        Get-TenantInformation
+        Get-MSOnlineData
+
+
+    }
+
+    elseif ($result -eq '3')
+    {
+        # Just Interesting Inbox Rules
+        New-OutputDirectory
+        Get-TenantInformation
+        Get-InterestingInboxRules
+
+    }
+
+    else
+    {
+
+        Write-Error "No selection or invalid selection was made, exiting..."
+
+    }
+
 
 }
 
-# Warm and fuzzies
-Write-Output "Beginning"
-Write-Warning "Searching back $DaysToSearchBack days from today, $today..."
-Start-Sleep -Seconds 5
-
-New-OutputDirectory
-Get-ExchangeOnlineData
-# Commenting this function out because it will take a very long time to run and will time out after a while. Uncomment the function if you wish to run it. Also advise running it on its own
-# Get-InterestingInboxRules
-Get-MSOnlineData
-
+# Starting actual execution here
+Show-Menu
