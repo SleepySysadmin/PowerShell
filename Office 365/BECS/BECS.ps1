@@ -307,7 +307,6 @@ function Get-InterestingInboxRules
 	{
 
 		$Errorcode = $Error[0] | Select-Object -Property *
-		Write-Error "[Error] - Modules and variables failed to load for Send-SkuReport! See Error below:"
 		Write-Error $Error[0]
 		
 	}
