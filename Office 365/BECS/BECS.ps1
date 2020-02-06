@@ -1,15 +1,14 @@
 <#
     .SYNOPSIS
-        Script to gather and audit information pretaining to a forensic investigation. A new directory 
-        will be made on the users Desktop folder with todays date. Any relevent information will be
-        sent there. 
+        Script to gather and audit information pretaining to a forensic investigation. A new directory will be made on the users Desktop folder with todays date.
+        Any relevent information will be sent there.  
 
     .DESCRIPTION
         To assist in Office 365 investigation, this script assists investigators and engineers in finding malicious alterations to an Office 365 environment.
         The following information is gathered from the Office 365 tenant:
-        - Basic information and configuration about the tenant
+        - Basic information and configuration data about the tenant
         - Mailbox forward addresses
-        - Inbox Rules
+        - Inbox Rules wityh questionable delete and forward actions
         - Recent Exchange Online mail flow rules
         - Newly created MSOL Users
         - Newly created mailboxes
@@ -17,6 +16,9 @@
         - List all MS Online role members
 
         This controller script is intended to be ran by an end user. 
+
+        If Inbox rules are fetched, the script will refresh its connection with Office 365 every 150 mailboxes, prompting the end user to log back into Exchange Online.
+        This is due to the shell timing out with Exchange Online since the Get-InboxRule cmdlet takes so long to run. 
     
     .NOTES
         Developed in PowerShell version 5.1. Office 365 and Exchange Online modules are required and must be connected to both prior to running controller
