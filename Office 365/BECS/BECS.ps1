@@ -51,6 +51,7 @@ function New-OutputDirectory
 
         New-Item -Path "$env:USERPROFILE\Desktop\$today - Office 365 Investigation\" -ItemType Directory -Name "Exchange Online Output"
         New-Item -Path "$env:USERPROFILE\Desktop\$today - Office 365 Investigation\" -ItemType Directory -Name "MSOL User Output"
+        
     }
 
 
