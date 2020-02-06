@@ -344,10 +344,43 @@ function Get-InterestingInboxRules
                 If ($InboxRule.DeleteMessage -eq $true -and $InboxRule.SubjectOrBodyContainsWords -like "*Mail Delivery*" -or $InboxRule.SubjectOrBodyContainsWords -like "*could not be delivered*")
                 {
 
-                    Write-Warning "$ID was flagged"
+                    Write-Warning "$ID was flagged for a questionable delete action"
                     IR-Logwrite " "
                     IR-Logwrite "---------------------------------------------------------------------------"
                     IR-Logwrite "The Inbox Rule from $ID deletes a message when processed:"
+                    IR-Logwrite "---------------------------------------------------------------------------"
+                    IR-Logwrite " "
+
+                    $String = $InboxRule.Description | Format-List | Out-String
+
+                    IR-Logwrite $String
+
+                }
+
+                elseIf ($InboxRule.DeleteMessage -eq $true -and $InboxRule.SubjectContainsWords -like "*Mail Delivery*" -or $InboxRule.SubjectContainsWords -like "*could not be delivered*")
+                {
+
+                    Write-Warning "$ID was flagged for a questionable delete action"
+                    IR-Logwrite " "
+                    IR-Logwrite "---------------------------------------------------------------------------"
+                    IR-Logwrite "The Inbox Rule from $ID deletes a message when processed:"
+                    IR-Logwrite "---------------------------------------------------------------------------"
+                    IR-Logwrite " "
+
+                    $String = $InboxRule.Description | Format-List | Out-String
+
+                    IR-Logwrite $String
+
+                }
+
+                # Forward to an outside email with questionable keywords
+                elseIf ($InboxRule.ForwardTo -like "*@*" -and $InboxRule.SubjectOrBodyContainsWords -like "*pay*" -or $InboxRule.SubjectOrBodyContainsWords -like "*invoice*" -or $InboxRule.SubjectOrBodyContainsWords -like "*wire*")
+                {
+
+                    Write-Warning "$ID was flagged for a questionable forward action"
+                    IR-Logwrite " "
+                    IR-Logwrite "---------------------------------------------------------------------------"
+                    IR-Logwrite "The Inbox Rule from $ID forwards a message when processed:"
                     IR-Logwrite "---------------------------------------------------------------------------"
                     IR-Logwrite " "
 
@@ -357,26 +390,11 @@ function Get-InterestingInboxRules
 
                 }
                 
-                elseIf ($InboxRule.DeleteMessage -eq $true -and $InboxRule.SubjectContainsWords -like "*Mail Delivery*" -or $InboxRule.SubjectContainsWords -like "*could not be delivered*")
+                # Forward to an outside email with questionable keywords
+                elseIf ($InboxRule.ForwardTo -like "*@*" -and $InboxRule.SubjectContainsWords -like "*pay*" -or $InboxRule.SubjectContainsWords -like "*invoice*" -or $InboxRule.SubjectContainsWords -like "*wire*")
                 {
 
-                    Write-Warning "$ID was flagged"
-                    IR-Logwrite " "
-                    IR-Logwrite "---------------------------------------------------------------------------"
-                    IR-Logwrite "The Inbox Rule from $ID deletes a message when processed:"
-                    IR-Logwrite "---------------------------------------------------------------------------"
-                    IR-Logwrite " "
-
-                    $String = $InboxRule.Description | Format-List | Out-String
-
-                    IR-Logwrite $String
-
-                }
-
-                elseIf ($InboxRule.ForwardTo -ne $null)
-                {
-
-                    Write-Warning "$ID was flagged"
+                    Write-Warning "$ID was flagged for a questionable forward action"
                     IR-Logwrite " "
                     IR-Logwrite "---------------------------------------------------------------------------"
                     IR-Logwrite "The Inbox Rule from $ID forwards a message when processed:"
@@ -389,7 +407,25 @@ function Get-InterestingInboxRules
 
                 }
 
-                elseIf ($InboxRule.ForwardAsAttachment -ne $null)
+                # Forward to an outside email with questionable keywords
+                elseIf ($InboxRule.ForwardAsAttachmentTo -like "*@*" -and $InboxRule.SubjectOrBodyContainsWords -like "*pay*" -or $InboxRule.SubjectOrBodyContainsWords -like "*invoice*" -or $InboxRule.SubjectOrBodyContainsWords -like "*wire*")
+                {
+
+                    Write-Warning "$ID was flagged"
+                    IR-Logwrite " "
+                    IR-Logwrite "---------------------------------------------------------------------------"
+                    IR-Logwrite "The Inbox Rule from $ID forwards a message as an attachment when processed:"
+                    IR-Logwrite "---------------------------------------------------------------------------"
+                    IR-Logwrite " "
+
+                    $String = $InboxRule.Description | Format-List | Out-String
+
+                    IR-Logwrite $String
+
+                }
+
+                # Forward to an outside email with questionable keywords
+                elseIf ($InboxRule.ForwardAsAttachmentTo -like "*@*" -and $InboxRule.SubjectContainsWords -like "*pay*" -or $InboxRule.SubjectContainsWords -like "*invoice*" -or $InboxRule.SubjectContainsWords -like "*wire*")
                 {
 
                     Write-Warning "$ID was flagged"
