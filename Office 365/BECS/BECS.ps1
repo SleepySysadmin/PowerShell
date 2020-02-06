@@ -341,7 +341,23 @@ function Get-InterestingInboxRules
                 $ID = $InboxRule.Identity
                 # Going to be doing more text output to grab all data
 
-                If ($InboxRule.DeleteMessage -eq $true)
+                If ($InboxRule.DeleteMessage -eq $true -and $InboxRule.SubjectOrBodyContainsWords -like "*Mail Delivery*" -or $InboxRule.SubjectOrBodyContainsWords -like "*could not be delivered*")
+                {
+
+                    Write-Warning "$ID was flagged"
+                    IR-Logwrite " "
+                    IR-Logwrite "---------------------------------------------------------------------------"
+                    IR-Logwrite "The Inbox Rule from $ID deletes a message when processed:"
+                    IR-Logwrite "---------------------------------------------------------------------------"
+                    IR-Logwrite " "
+
+                    $String = $InboxRule.Description | Format-List | Out-String
+
+                    IR-Logwrite $String
+
+                }
+                
+                elseIf ($InboxRule.DeleteMessage -eq $true -and $InboxRule.SubjectContainsWords -like "*Mail Delivery*" -or $InboxRule.SubjectContainsWords -like "*could not be delivered*")
                 {
 
                     Write-Warning "$ID was flagged"
