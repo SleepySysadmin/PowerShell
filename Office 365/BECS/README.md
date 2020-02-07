@@ -29,7 +29,8 @@ The following data is collected from this tool:
 * Basic information about the Office 365 tenant
 * Mailbox forward addresses
 * Interesting Inbox Rules
-    * Anything with a forward or delete action
+    * Forwards to outside emails with interesting keywords
+    * Deletes that try to hide non-deliverable notifications 
 * Recently changed Exchange Online mail flow rules
 * Newly created mailboxes
 * Recently added mobile devices
