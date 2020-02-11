@@ -414,7 +414,7 @@ function Get-InterestingInboxRules
                 elseIf ($InboxRule.ForwardAsAttachmentTo -like "*@*" -and $InboxRule.SubjectOrBodyContainsWords -like "*pay*" -or $InboxRule.SubjectOrBodyContainsWords -like "*invoice*" -or $InboxRule.SubjectOrBodyContainsWords -like "*wire*")
                 {
 
-                    Write-Warning "$ID was flagged"
+                    Write-Warning "$ID was flagged for a questionable forward action"
                     IR-Logwrite " "
                     IR-Logwrite "---------------------------------------------------------------------------"
                     IR-Logwrite "The Inbox Rule from $ID forwards a message as an attachment when processed:"
@@ -431,7 +431,7 @@ function Get-InterestingInboxRules
                 elseIf ($InboxRule.ForwardAsAttachmentTo -like "*@*" -and $InboxRule.SubjectContainsWords -like "*pay*" -or $InboxRule.SubjectContainsWords -like "*invoice*" -or $InboxRule.SubjectContainsWords -like "*wire*")
                 {
 
-                    Write-Warning "$ID was flagged"
+                    Write-Warning "$ID was flagged for a questionable forward action"
                     IR-Logwrite " "
                     IR-Logwrite "---------------------------------------------------------------------------"
                     IR-Logwrite "The Inbox Rule from $ID forwards a message as an attachment when processed:"
