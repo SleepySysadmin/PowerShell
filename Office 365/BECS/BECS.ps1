@@ -278,14 +278,91 @@ function Get-ExchangeOnlineData
 
 }
 
+function Get-MSOnlineData
+{
+    <#
+        .SYNOPSIS
+            Will gather the following data from this function:
+                - Recently created MSOL Users
+                - Members of all administrative roles
+    
+    #>
+
+    function Get-RecentMSOLUsers
+    {
+
+        $MSOLUsers = Get-Msoluser -All 
+
+        $i = 0
+        $Total = $MSOLUsers.count
+
+        ForEach ($MSOLUser in $MSOLUsers)
+        {
+            # Warm and Fuzzies
+            Write-Progress -Activity "Gathering MSOLUser Data..." -CurrentOperation $MSOLUser -PercentComplete ($i/$Total * 100)
+            $i++
+
+            If ($MSOLUser.WhenCreated -gt $SearchDate)
+            {
+
+                $MSOLUserProperties = [ordered]@{
+                    UserPrincipalName = $MSOLUser.UserPrincipalName
+                    DisplayName       = $MSOLUser.DisplayName
+                    IsLicensed        = $MSOLUser.IsLicensed
+                    WhenCreated       = $MSOLUser.WhenCreated
+                }
+
+                $MSOLUserOutput = New-Object -TypeName System.Management.Automation.PSObject -Property $MSOLUserProperties
+                $MSOLUserOutput | Export-Csv "$env:USERPROFILE\Desktop\$today - Office 365 Investigation\MSOL User Output\RecentMSOLUsers.csv" -Append -Force
+
+            }
+
+        }
+
+    }
+
+    function Get-AllMSOLRoleMemberships
+    {
+
+        $roles = Get-MsolRole | Sort-Object Name
+        Foreach ($role in $roles)
+        {
+            $ID = $role.objectID
+            $name = $role.Name
+
+            $RoleMembers = Get-MsolRoleMember -RoleObjectId $ID -ErrorAction SilentlyContinue
+            foreach ($RoleMember in $RoleMembers)
+            {
+
+                $RoleProperties = [ordered]@{
+                    RoleName           = $name
+                    MemberEmailAddress = $RoleMember.EmailAddress
+                    MemberDisplayName  = $RoleMember.DisplayName
+                }
+
+                $RoleOutput = New-Object -TypeName System.Management.Automation.PSObject -Property $RoleProperties
+                $RoleOutput | Export-Csv "$env:USERPROFILE\Desktop\$today - Office 365 Investigation\MSOL User Output\MSOLRoleMembers.csv" -Append -Force
+
+            }
+            
+        }
+
+    }
+
+    # Start gethering MSOnline Data
+    Get-RecentMSOLUsers
+    Get-AllMSOLRoleMemberships
+
+}
+
 function Get-InterestingInboxRules
 {
     <#
         .SYNOPSIS
             Checking all mailbox rules for the following:
-                - Delete Message equal $True
-                - Forward To not null
-                - Forward as Attachment not null
+                - Delete Message equal $True and has anything that would cover tracks/delete NDRs
+                - Forward To containing interesting keywords. Mostly pertaining to billing or payments
+                - Forward as Attachment that has the same interesting keywords.
     
     #>
 
@@ -466,83 +543,6 @@ function Get-InterestingInboxRules
     While ($offset -lt $MailboxCount)
 
     Get-PSSession | Remove-PSSession
-
-}
-
-function Get-MSOnlineData
-{
-    <#
-        .SYNOPSIS
-            Will gather the following data from this function:
-                - Recently created MSOL Users
-                - Members of all administrative roles
-    
-    #>
-
-    function Get-RecentMSOLUsers
-    {
-
-        $MSOLUsers = Get-Msoluser -All 
-
-        $i = 0
-        $Total = $MSOLUsers.count
-
-        ForEach ($MSOLUser in $MSOLUsers)
-        {
-            # Warm and Fuzzies
-            Write-Progress -Activity "Gathering MSOLUser Data..." -CurrentOperation $MSOLUser -PercentComplete ($i/$Total * 100)
-            $i++
-
-            If ($MSOLUser.WhenCreated -gt $SearchDate)
-            {
-
-                $MSOLUserProperties = [ordered]@{
-                    UserPrincipalName = $MSOLUser.UserPrincipalName
-                    DisplayName       = $MSOLUser.DisplayName
-                    IsLicensed        = $MSOLUser.IsLicensed
-                    WhenCreated       = $MSOLUser.WhenCreated
-                }
-
-                $MSOLUserOutput = New-Object -TypeName System.Management.Automation.PSObject -Property $MSOLUserProperties
-                $MSOLUserOutput | Export-Csv "$env:USERPROFILE\Desktop\$today - Office 365 Investigation\MSOL User Output\RecentMSOLUsers.csv" -Append -Force
-
-            }
-
-        }
-
-    }
-
-    function Get-AllMSOLRoleMemberships
-    {
-
-        $roles = Get-MsolRole | Sort-Object Name
-        Foreach ($role in $roles)
-        {
-            $ID = $role.objectID
-            $name = $role.Name
-
-            $RoleMembers = Get-MsolRoleMember -RoleObjectId $ID -ErrorAction SilentlyContinue
-            foreach ($RoleMember in $RoleMembers)
-            {
-
-                $RoleProperties = [ordered]@{
-                    RoleName           = $name
-                    MemberEmailAddress = $RoleMember.EmailAddress
-                    MemberDisplayName  = $RoleMember.DisplayName
-                }
-
-                $RoleOutput = New-Object -TypeName System.Management.Automation.PSObject -Property $RoleProperties
-                $RoleOutput | Export-Csv "$env:USERPROFILE\Desktop\$today - Office 365 Investigation\MSOL User Output\MSOLRoleMembers.csv" -Append -Force
-
-            }
-            
-        }
-
-    }
-
-    # Start gethering MSOnline Data
-    Get-RecentMSOLUsers
-    Get-AllMSOLRoleMemberships
 
 }
 
